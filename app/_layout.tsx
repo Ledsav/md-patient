@@ -1,37 +1,41 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import React, { useState } from 'react';
+import { useColorScheme, Button } from 'react-native';
+import { Stack } from "expo-router";
+import { ThemeProvider } from 'styled-components/native';
+import { PaperProvider } from 'react-native-paper';
+import { PatientProvider } from '@/context/PatientContext';
+import {theme, ThemeMode} from "@/style/Theme"; // Make sure this import path is correct
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+    const deviceColorScheme = useColorScheme();
+    const [themeMode, setThemeMode] = useState<ThemeMode>(deviceColorScheme || 'light');
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    const toggleTheme = () => {
+        setThemeMode(prevMode => prevMode === 'light' ? 'dark' : 'light');
+    };
 
-  if (!loaded) {
-    return null;
-  }
+    const fullTheme = {
+        ...theme,
+        themeMode,
+    };
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
-  );
+    return (
+        <ThemeProvider theme={fullTheme}>
+            <PaperProvider>
+                <PatientProvider>
+                    <Stack>
+                        <Stack.Screen
+                            name="index"
+                            options={{
+                                title: 'Patient Portal',
+                                headerRight: () => (
+                                    <Button onPress={toggleTheme} title={themeMode === 'light' ? '🌙' : '☀️'} />
+                                ),
+                            }}
+                        />
+                    </Stack>
+                </PatientProvider>
+            </PaperProvider>
+        </ThemeProvider>
+    );
 }
